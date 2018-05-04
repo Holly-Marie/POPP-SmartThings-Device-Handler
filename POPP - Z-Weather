@@ -19,22 +19,18 @@ metadata {
         capability "Configuration"
         capability "Illuminance Measurement"
         capability "Temperature Measurement"
-        capability "Notification"
-        capability ""
-        capability ""
-        capability ""
-        capability ""
-        
+        capability "Notification"        
 
         command "reset"
         command "refresh"
         command "calibrate"
-        command "stop"
-        command "setPosition"
-        command "setSlats"
 
-        attribute "illuminance", "NUMBER"
         attribute "temperature", "NUMBER"
+        attribute "illuminance", "NUMBER"
+        attribute "relativeHumidity", "NUMBER"
+        attribute "windSpeed", "NUMBER"
+        attribute "barometricPressure", "NUMBER"
+        attribute "dewPoint", "NUMBER"
 
         fingerprint mfr: "0154", prod: "0100", model: "0400"
         fingerprint mfr: "0154", inClusters: "0x20,0x31,0x32,0x59,0x70,0x72,0x73,0x80,0x84,0x85,0x86,0x8E,0x8F,0x9B,0x89,0x60,0x5A"
