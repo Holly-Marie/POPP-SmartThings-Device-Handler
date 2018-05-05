@@ -19,12 +19,15 @@ metadata {
         capability "Configuration"
         capability "Illuminance Measurement"
         capability "Temperature Measurement"
-        capability "Notification"        
+        capability "Notification"
+        capability "Refresh"
 
         command "reset"
         command "refresh"
-        command "calibrate"
+        command "configure"
+        command "deviceNotification"
 
+        attribute "battery", "NUMBER"
         attribute "temperature", "NUMBER"
         attribute "illuminance", "NUMBER"
         attribute "relativeHumidity", "NUMBER"
@@ -77,10 +80,10 @@ metadata {
 
     preferences {
         input (
-                title: "Fibaro Roller Shutter 2 ZW5",
+                title: "POPP Z-Weather",
                 description: "Tap to view the manual.",
-                image: "http://manuals.fibaro.com/wp-content/uploads/2017/02/rs2_icon.png",
-                url: "http://manuals.fibaro.com/content/manuals/en/FGR-222/FGR-222-EN-A-v1.1.pdf",
+                image: "http://www.popp.eu/wp-content/uploads/2015/07/th_Z-Weather_1.png",
+                url: "http://manuals-backend.z-wave.info/make.php?lang=en&sku=pope005206&type=popp",
                 type: "href",
                 element: "href"
         )
@@ -106,18 +109,14 @@ metadata {
         }
 
         input ( name: "logging", title: "Logging", type: "boolean", required: false )
-        
-        input ( name: "awning", title: "Is Awning", type: "boolean", defaultValue: true, required: true )
     }
 }
 
-def open() { setFibaro(99,99) }
+def configure() { encap(zwave.configurationV2.configurationSet(configurationValue: intToParam(1, 1), parameterNumber: 29, size: 1)) }
 
-def close() { setFibaro(0,0) }
-
-def stop() { encap(zwave.switchMultilevelV3.switchMultilevelStopLevelChange()) }
-
-def calibrate() { encap(zwave.configurationV2.configurationSet(configurationValue: intToParam(1, 1), parameterNumber: 29, size: 1)) }
+def deviceNotification(String notification) {
+    
+}
 
 def setPosition(Integer value) {
     if (device.currentValue("position") > value) {
