@@ -17,19 +17,13 @@ metadata {
         capability "Actuator"
         capability "Battery"
         capability "Configuration"
-        capability "Illuminance Measurement"
         capability "Temperature Measurement"
-        capability "Notification"
-        capability "Refresh"
 
-        command "reset"
-        command "refresh"
         command "configure"
-        command "deviceNotification"
 
         attribute "battery", "NUMBER"
         attribute "temperature", "NUMBER"
-        attribute "illuminance", "NUMBER"
+        attribute "luminance", "NUMBER"
         attribute "relativeHumidity", "NUMBER"
         attribute "windSpeed", "NUMBER"
         attribute "barometricPressure", "NUMBER"
@@ -40,42 +34,45 @@ metadata {
         fingerprint mfr: "0154", prod: "0100", model: "0400", inClusters: "0x20,0x31,0x32,0x59,0x70,0x72,0x73,0x80,0x84,0x85,0x86,0x8E,0x8F,0x9B,0x89,0x60,0x5A"
     }
 
-/*
     tiles (scale: 2) {
-        multiAttributeTile(name:"windowShade", type: "generic", width: 3, height: 4){
-            tileAttribute ("device.windowShade", key: "PRIMARY_CONTROL") {
-                attributeState "unknown", label: 'Unknown', action: "calibrate", icon: "http://teez-media.com/images/screencalibrating.png", backgroundColor: "#ffffff"
-                attributeState "closed", label: 'Retracted', action: "open", icon: "http://teez-media.com/images/screenclosed.png", backgroundColor: "#ffffff", nextState:"opening"
-                attributeState "open", label: 'Extended', action: "close", icon: "http://teez-media.com/images/screenextended.png", backgroundColor: "#00a0dc", nextState:"closing"
-                attributeState "opening", label: 'Extending', action: "stop", icon: "http://teez-media.com/images/screenhalf.png", backgroundColor: "#99d9f1", nextState:"partially open"
-                attributeState "closing", label: 'Retracting', action: "stop", icon: "http://teez-media.com/images/screenhalf.png", backgroundColor: "#99d9f1", nextState:"partially open"
-                attributeState "partially open", label: 'Partially Extended', action: "open", icon: "http://teez-media.com/images/screenhalf.png", backgroundColor: "#00a0dc", nextState:"opening"
-            }
-            tileAttribute("device.multiStatus", key:"SECONDARY_CONTROL") {
-                attributeState("multiStatus", label:'${currentValue}')
-            }
-            tileAttribute ("device.position", key: "SLIDER_CONTROL") {
-                attributeState "position", action:"setPosition"
-            }
+        valueTile("temperature", "device.temperature", width: 2, height: 2) {
+            state "temperature", label:'Temp\n${currentValue}°C',
+                    backgroundColors:[
+							// Celsius
+							[value: 0, color: "#153591"],
+							[value: 7, color: "#1e9cbb"],
+							[value: 15, color: "#90d2a7"],
+							[value: 23, color: "#44b621"],
+							[value: 28, color: "#f1d801"],
+							[value: 35, color: "#d04e00"],
+							[value: 37, color: "#bc2323"]
+                    ]
         }
-        valueTile("power", "device.power", decoration: "flat", width: 2, height: 2) {
-            state "power", label:'${currentValue}\nW', action:"refresh"
+        valueTile("luminance", "device.luminance", decoration: "flat", width: 2, height: 2) {
+            state "luminance", label:'Luminance\n${currentValue}%'
         }
-        valueTile("energy", "device.energy", decoration: "flat", width: 2, height: 2) {
-            state "energy", label:'${currentValue}\nkWh', action:"refresh"
+        valueTile("relativeHumidity", "device.relativeHumidity", decoration: "flat", width: 2, height: 2) {
+            state "relativeHumidity", label:'Humidity\n${currentValue}%'
         }
-        valueTile("reset", "device.energy", decoration: "flat", width: 2, height: 2) {
-            state "reset", label:'reset\nkWh', action:"reset"
+        valueTile("windSpeed", "device.windSpeed", decoration: "flat", width: 2, height: 2) {
+            state "windSpeed", label:'Wind\n${currentValue}m/s'
         }
-        valueTile("calibrate", "device.calibrate", decoration: "flat", width: 2, height: 1) {
-            state "calibrate", label:'Calibrate', action:"calibrate"
+        valueTile("barometricPressure", "device.barometricPressure", decoration: "flat", height: 2, width: 2) {
+            state "barometricPressure", label:'Barometer\n${currentValue}mBar'
         }
-        valueTile("slatsText", "device.slats", decoration: "flat", width: 2, height: 1) {
-            state "slats", label:'Slats:'
+        valueTile("dewPoint", "device.dewPoint", decoration: "flat", height: 2, width: 2) {
+            state "dewPoint", label:'Dew Point\n${currentValue}°C'
         }
-        controlTile("slats", "device.slats", "slider", range:"(0..100)", height: 1, width: 2) {
-            state "slats", label:'slats', action:"setSlats"
+        valueTile("battery", "device.battery", decoration: "flat", width: 2, height: 2) {
+            state "battery", label:'Battery\n${currentValue}%'
         }
+        
+        // the "temperature", "windSpeed", "relativeHumidity" tiles will appear in the Things view
+        main(["temperature", "windSpeed", "relativeHumidity"])
+
+        // the "temperature", "windSpeed", "relativeHumidity", "barometricPressure", "luminance", "dewPoint" and "battery" tiles will appear in the Device Details
+        // view (order is left-to-right, top-to-bottom)
+        details(["temperature", "windSpeed", "relativeHumidity", "barometricPressure", "luminance", "dewPoint", "battery"])
     }
 
     preferences {
@@ -83,7 +80,7 @@ metadata {
                 title: "POPP Z-Weather",
                 description: "Tap to view the manual.",
                 image: "http://www.popp.eu/wp-content/uploads/2015/07/th_Z-Weather_1.png",
-                url: "http://manuals-backend.z-wave.info/make.php?lang=en&sku=pope005206&type=popp",
+                url: "http://www.popp.eu/wp-content/uploads/2016/04/Manual_Z-Weather_POPP_En.pdf",
                 type: "href",
                 element: "href"
         )
@@ -114,10 +111,7 @@ metadata {
 
 def configure() { encap(zwave.configurationV2.configurationSet(configurationValue: intToParam(1, 1), parameterNumber: 29, size: 1)) }
 
-def deviceNotification(String notification) {
-    
-}
-
+/*
 def setPosition(Integer value) {
     if (device.currentValue("position") > value) {
         sendEvent(name: "windowShade", value: "closing");
@@ -142,23 +136,7 @@ def setFibaro(Integer position = null, Integer slats = null) {
         return "91010f26010100${Integer.toHexString(slats).padLeft(2,'0')}"
     }
 }
-
-def reset() {
-    def cmds = []
-    cmds << zwave.meterV3.meterReset()
-    cmds << zwave.meterV3.meterGet(scale: 0)
-    cmds << zwave.meterV3.meterGet(scale: 2)
-    encapSequence(cmds,1500)
-}
-
-def refresh() {
-    def cmds = []
-    cmds << zwave.basicV1.basicGet()
-    cmds << zwave.meterV3.meterGet(scale: 0)
-    cmds << zwave.meterV3.meterGet(scale: 2)
-    cmds << zwave.sensorMultilevelV5.sensorMultilevelGet()
-    encapSequence(cmds,1500)
-}
+*/
 
 def updated() {
     if ( state.lastUpdated && (now() - state.lastUpdated) < 500 ) return
@@ -482,4 +460,3 @@ private parameterMap() {[
         [key: "motorTreshold", num: 18, size: 1, type: "number", def: 10, min: 0, max: 255 , title: "Motor operation detection",
          descr: "Power threshold to be interpreted as reaching a limit switch. (1-255 W)"],
 ]}
-*/
