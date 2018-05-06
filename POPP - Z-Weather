@@ -130,8 +130,6 @@ metadata {
     }
 }
 
-def configure() { encap(zwave.configurationV2.configurationSet(configurationValue: intToParam(1, 1), parameterNumber: 29, size: 1)) }
-
 /*
 def setPosition(Integer value) {
     if (device.currentValue("position") > value) {
@@ -174,8 +172,12 @@ def updated() {
 
 def configure() {
     def cmds = []
+    cmds << zwave.associationV2.associationSet(groupingIdentifier: 1, nodeId: zwaveHubNodeId)
+    cmds << zwave.associationV2.associationSet(groupingIdentifier: 2, nodeId: zwaveHubNodeId)
     cmds << zwave.associationV2.associationSet(groupingIdentifier: 3, nodeId: zwaveHubNodeId)
-    cmds << zwave.configurationV2.configurationSet(configurationValue: intToParam(1, 1), parameterNumber: 3, size: 1)
+    cmds << zwave.associationV2.associationSet(groupingIdentifier: 4, nodeId: zwaveHubNodeId)
+    cmds << zwave.configurationV2.configurationSet(configurationValue: intToParam(${device.tooMuchWindThreshold}, 1), parameterNumber: 1, size: 1)
+    cmds << zwave.configurationV2.configurationSet(configurationValue: intToParam(${device.twilightTreshold}, 1), parameterNumber: 2, size: 1)
     encapSequence(cmds, 1000)
 }
 
