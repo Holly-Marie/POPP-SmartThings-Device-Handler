@@ -63,7 +63,7 @@ metadata {
             state "windSpeed", label:'Wind\n${currentValue}m/s'
         }
         valueTile("barometricPressure", "device.barometricPressure", decoration: "flat", height: 2, width: 2) {
-            state "barometricPressure", label:'Barometer\n${currentValue}mBar'
+            state "barometricPressure", label:'Barometer\n${currentValue}\nmBar'
         }
         valueTile("dewPoint", "device.dewPoint", decoration: "flat", height: 2, width: 2) {
             state "dewPoint", label:'Dew Point\n${currentValue}°C'
@@ -76,7 +76,7 @@ metadata {
         }
 	
 	valueTile("velocity", "device.velocity", decoration: "flat", width: 2, height: 2) {
-            state "velocity", label:'Velocity\n${currentValue}'
+            state "velocity", label:'Velocity\n${currentValue}m/s'
         }
 	valueTile("solarRadiation", "device.solarRadiation", decoration: "flat", width: 2, height: 2) {
             state "solarRadiation", label:'Solar Radiation\n${currentValue}'
@@ -88,12 +88,12 @@ metadata {
             state "rotation", label:'Rotation\n${currentValue}'
         }
         
-        // the "temperature", "windSpeed", "relativeHumidity" tiles will appear in the Things view
-        main(["temperature", "windSpeed", "relativeHumidity"])
+        // the "temperature" tiles will appear in the Things view
+        main(["temperature"])
 
         // the "temperature", "windSpeed", "relativeHumidity", "barometricPressure", "luminance", "dewPoint" and "battery" tiles will appear in the Device Details
         // view (order is left-to-right, top-to-bottom)
-        details(["temperature", "windSpeed", "relativeHumidity", "barometricPressure", "luminance", "dewPoint", "battery", "powerLevel"])
+        details(["temperature", "windSpeed", "relativeHumidity", "barometricPressure", "luminance", "dewPoint", "battery", "powerLevel", "velocity", "solarRadiation", "airFlow", "rotation"])
     }
 
     preferences {
@@ -332,13 +332,14 @@ def zwaveEvent(physicalgraph.zwave.commands.sensormultilevelv5.SensorMultilevelR
             break;
         case physicalgraph.zwave.commands.sensormultilevelv5.SensorMultilevelReport.SENSOR_TYPE_VELOCITY_VERSION_2:
             sendEvent(name: "velocity", value: cmd.scaledSensorValue);
+	    sendEvent(name: "windSpeed", value: cmd.scaledSensorValue);
 	    logging("${device.displayName} - SensorMultilevelReport received VELOCITY = $cmd.scaledSensorValue","info");
             break;
         case physicalgraph.zwave.commands.sensormultilevelv5.SensorMultilevelReport.SENSOR_TYPE_SOLAR_RADIATION_VERSION_2:
             sendEvent(name: "solarRadiation", value: cmd.scaledSensorValue);
 	    logging("${device.displayName} - SensorMultilevelReport received SOLAR_RADIATIO = $cmd.scaledSensorValue","info");
             break;
-        case physicalgraph.zwave.commands.sensormultilevelv5.SensorMultilevelReport.SENSOR_TYPE_AIR_FLOW_VERSION_3:
+        case physicalgraph.zwave.commands.sensormultilevelv3.SensorMultilevelReport.SENSOR_TYPE_AIR_FLOW_VERSION_3:
             sendEvent(name: "airFlow", value: cmd.scaledSensorValue);
 	    logging("${device.displayName} - SensorMultilevelReport received AIR_FLOW = $cmd.scaledSensorValue","info");
             break;
@@ -347,6 +348,7 @@ def zwaveEvent(physicalgraph.zwave.commands.sensormultilevelv5.SensorMultilevelR
 	    logging("${device.displayName} - SensorMultilevelReport received ROTATION = $cmd.scaledSensorValue","info");
             break;
         default:
+	    logging("${device.displayName} - SensorMultilevelReport received sensorType $cmd.sensorType = $cmd.scaledSensorValue","info");
             break;
     }
 }
