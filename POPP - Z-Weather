@@ -130,33 +130,6 @@ metadata {
     }
 }
 
-/*
-def setPosition(Integer value) {
-    if (device.currentValue("position") > value) {
-        sendEvent(name: "windowShade", value: "closing");
-        sendEvent(name: "garageDoorControl", value: "closing");
-    } else if (device.currentValue("position") < value) {
-        sendEvent(name: "windowShade", value: "opening");
-        sendEvent(name: "garageDoorControl", value: "opening");
-    }
-    setFibaro((value > 0) ? value-1 : 0, null)
-}
-
-def setSlats(Integer value) {
-    setFibaro(null, (value > 0) ? value-1 : 0)
-}
-
-def setFibaro(Integer position = null, Integer slats = null) {
-    if ( position != null && slats != null ) {
-        return "91010f260103${Integer.toHexString(position).padLeft(2,'0')}${Integer.toHexString(slats).padLeft(2,'0')}"
-    } else if ( position != null ) {
-        return "91010f260102${Integer.toHexString(position).padLeft(2,'0')}00"
-    } else if ( slats != null ) {
-        return "91010f26010100${Integer.toHexString(slats).padLeft(2,'0')}"
-    }
-}
-*/
-
 def updated() {
     if ( state.lastUpdated && (now() - state.lastUpdated) < 500 ) return
     def cmds = []
@@ -176,8 +149,8 @@ def configure() {
     cmds << zwave.associationV2.associationSet(groupingIdentifier: 2, nodeId: zwaveHubNodeId)
     cmds << zwave.associationV2.associationSet(groupingIdentifier: 3, nodeId: zwaveHubNodeId)
     cmds << zwave.associationV2.associationSet(groupingIdentifier: 4, nodeId: zwaveHubNodeId)
-    cmds << zwave.configurationV2.configurationSet(configurationValue: intToParam(${device.tooMuchWindThreshold}, 1), parameterNumber: 1, size: 1)
-    cmds << zwave.configurationV2.configurationSet(configurationValue: intToParam(${device.twilightTreshold}, 1), parameterNumber: 2, size: 1)
+    cmds << zwave.configurationV1.configurationSet(configurationValue: intToParam(${device.tooMuchWindThreshold}, 1), parameterNumber: 1, size: 1)
+    cmds << zwave.configurationV1.configurationSet(configurationValue: intToParam(${device.twilightTreshold}, 1), parameterNumber: 2, size: 1)
     encapSequence(cmds, 1000)
 }
 
@@ -365,15 +338,21 @@ def zwaveEvent(physicalgraph.zwave.commands.powerlevelv1.PowerlevelReport cmd) {
 
 def zwaveEvent(physicalgraph.zwave.commands.meterv3.MeterReport cmd) {
     logging("${device.displayName} - MeterReport received, value: ${cmd.scaledMeterValue} scale: ${cmd.scale}","info")
-    switch (cmd.scale) {
-        case 0:
-            sendEvent([name: "energy", value: cmd.scaledMeterValue, unit: "kWh"])
-            break
-        case 2:
-            sendEvent([name: "power", value: cmd.scaledMeterValue, unit: "W"])
-            break
+    def result
+    if (cmd.scale == 0) {
+        result = createEvent(name: "energy", value: cmd.scaledMeterValue, unit: "kWh")
+    } else if (cmd.scale == 1) {
+        result = createEvent(name: "energy", value: cmd.scaledMeterValue, unit: "kVAh")
+    } else {
+        result = createEvent(name: "power", value: cmd.scaledMeterValue, unit: "W")
     }
-    multiStatusEvent("${(device.currentValue("power") ?: "0.0")} W | ${(device.currentValue("energy") ?: "0.00")} kWh")
+    return result
+}
+
+def zwaveEvent(physicalgraph.zwave.Command cmd) {
+    // This will capture any commands not handled by other instances of zwaveEvent
+    // and is recommended for development so you can see every command the device sends
+    return createEvent(descriptionText: "${device.displayName}: ${cmd}")
 }
 
 def parse(String description) {
@@ -392,7 +371,7 @@ def parse(String description) {
     } else {
         def map = descriptionToMap(description)
         if (map?.command == "9101") {
-            parseFibaro(map)
+            parsePopp(map)
         } else {
             def cmd = zwave.parse(description)
             if (cmd) {
@@ -407,8 +386,9 @@ def descriptionToMap(String description) {
     def result = description.split(',').collectEntries { [(it.split(':')[0].trim()): it.split(':')[1].trim()] }
 }
 
-def parseFibaro(map) {
-    logging("${device.displayName} - Parsing Fibaro Proprietary command: ${map}")
+def parsePopp(map) {
+    logging("${device.displayName} - Parsing Popp Proprietary command: ${map}")
+    /*
     def payload = map.payload.split(" ")
     Integer val1 = Integer.parseInt(payload[4], 16)
     Integer val2 = Integer.parseInt(payload[5], 16)
@@ -438,6 +418,7 @@ def parseFibaro(map) {
             sendEvent(name: "garageDoorControl", value: "partially open", displayed: false);
             break;
     }
+    */
 }
 
 def zwaveEvent(physicalgraph.zwave.commands.securityv1.SecurityMessageEncapsulation cmd) {
